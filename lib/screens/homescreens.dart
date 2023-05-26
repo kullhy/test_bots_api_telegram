@@ -13,7 +13,7 @@ class HomeScreens extends StatefulWidget {
 }
 
 class _HomeScreensState extends State<HomeScreens> {
-  List<Result> results = [];
+  Map<int, List<Result>> resultMap = {};
 
   Timer? timer;
 
@@ -31,7 +31,7 @@ class _HomeScreensState extends State<HomeScreens> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(Duration(seconds: 5), (Timer timer) {
+    timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
       fetchResults();
     });
   }
@@ -44,73 +44,91 @@ class _HomeScreensState extends State<HomeScreens> {
     try {
       final results = await ApiService.fetchResults();
       setState(() {
-        this.results = results;
+        resultMap = _processResults(results);
       });
     } catch (e) {
       // Xử lý lỗi khi không thể lấy được kết quả
-      print(e);
+      // print(e);
     }
+  }
+
+  Map<int, List<Result>> _processResults(List<Result> results) {
+    final processedMap = <int, List<Result>>{};
+
+    for (var result in results) {
+      final fromId = result.message?.from?.id;
+
+      if (fromId != null) {
+        if (!processedMap.containsKey(fromId)) {
+          processedMap[fromId] = [];
+        }
+        processedMap[fromId]?.add(result);
+      }
+    }
+
+    return processedMap;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Main Screen'),
+        title: const Text('Main Screen'),
       ),
-      body: Row(
-        children: [
-          ListView.builder(
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              final result = results[index];
-              final fromId = result.message?.from?.id;
-              final text = result.message?.text;
-              final date = result.message?.date;
+      body: ListView.builder(
+        itemCount: resultMap.length,
+        itemBuilder: (context, index) {
+          final fromId = resultMap.keys.elementAt(index);
+          final lastResult = resultMap[fromId]?.last;
 
-              return ListTile(
-                title: Text('From ID: $fromId'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          UserScreen(fromId: fromId, text: text, date: date),
-                    ),
-                  );
-                },
+          return ListTile(
+            title: Text('${lastResult?.message?.chat?.firstName}'),
+            subtitle: Text('Last Message: ${lastResult?.message?.text ?? ''}'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailScreen(
+                    fromId: fromId,
+                    results: resultMap[fromId] ?? [],
+                  ),
+                ),
               );
             },
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-class UserScreen extends StatelessWidget {
-  final int? fromId;
-  final String? text;
-  final int? date;
+class DetailScreen extends StatelessWidget {
+  final int fromId;
+  final List<Result> results;
 
-  UserScreen({required this.fromId, required this.text, required this.date});
+  const DetailScreen({super.key, required this.fromId, required this.results});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('User Screen'),
+        title: const Text('Detail Screen'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('From ID: $fromId'),
-            Text('Text: $text'),
-            Text('Date: $date'),
-          ],
-        ),
+      body: ListView.builder(
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          final result = results[index];
+          return ListTile(
+            title: Text('From ID: $fromId'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Text: ${result.message?.text}'),
+                Text('Date: ${result.message?.date}'),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
