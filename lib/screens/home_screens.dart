@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../controller/getUpdates.dart';
+import '../controller/saveToDb.dart';
 import '../model/user/result.dart';
+import 'detail_screens.dart';
 
 class HomeScreens extends StatefulWidget {
   const HomeScreens({super.key});
@@ -43,6 +45,10 @@ class _HomeScreensState extends State<HomeScreens> {
   Future<void> fetchResults() async {
     try {
       final results = await ApiService.fetchResults();
+
+      // Lưu dữ liệu từ JSON vào cơ sở dữ liệu
+      saveResultsToDatabase(results);
+
       setState(() {
         resultMap = _processResults(results);
       });
@@ -95,38 +101,6 @@ class _HomeScreensState extends State<HomeScreens> {
                 ),
               );
             },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class DetailScreen extends StatelessWidget {
-  final int fromId;
-  final List<Result> results;
-
-  const DetailScreen({super.key, required this.fromId, required this.results});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detail Screen'),
-      ),
-      body: ListView.builder(
-        itemCount: results.length,
-        itemBuilder: (context, index) {
-          final result = results[index];
-          return ListTile(
-            title: Text('From ID: $fromId'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Text: ${result.message?.text}'),
-                Text('Date: ${result.message?.date}'),
-              ],
-            ),
           );
         },
       ),
