@@ -50,11 +50,11 @@ class _HomeScreensState extends State<HomeScreens> {
   Future<void> fetchResults() async {
     try {
       final results = await ApiService.fetchResults();
+      // print("$results done ok");
       setState(() {
         resultMap = _processResults(results);
+        // print("${results[2].message?.from} done ok");
       });
-
-      await saveResultsToDatabase(results);
     } catch (e) {
       // Xử lý lỗi khi không thể lấy được kết quả
       print(e);
@@ -63,7 +63,7 @@ class _HomeScreensState extends State<HomeScreens> {
 
   Future<void> checkDatabaseEmpty() async {
     final database = await _databaseHelper.database;
-    final results = await database.query('message');
+    final results = await database.query('user');
 
     setState(() {
       isDatabaseEmpty = results.isEmpty;
@@ -89,39 +89,6 @@ class _HomeScreensState extends State<HomeScreens> {
     return processedMap;
   }
 
-  // Future<void> saveResultsToDatabase(List<Result> results) async {
-  //   final database = await _databaseHelper.database;
-
-  //   for (var result in results) {
-  //     final fromId = result.message?.from?.id;
-  //     final text = result.message?.text;
-  //     final dateTime = result.message?.date?.toString();
-
-  //     if (fromId != null && text != null && dateTime != null) {
-  //       final existingMessage = await database.query(
-  //         'message',
-  //         where: 'userId = ?',
-  //         whereArgs: [fromId],
-  //         limit: 1,
-  //         orderBy: 'dateTime DESC',
-  //       );
-
-  //       if (existingMessage.isEmpty ||
-  //           existingMessage.first['text'] != text ||
-  //           existingMessage.first['dateTime'] != dateTime) {
-  //         await database.insert(
-  //           'message',
-  //           {
-  //             'userId': fromId,
-  //             'text': text,
-  //             'dateTime': dateTime,
-  //           },
-  //         );
-  //       }
-  //     }
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +96,7 @@ class _HomeScreensState extends State<HomeScreens> {
         title: const Text('Main Screen'),
       ),
       body: isDatabaseEmpty
-          ? Center(
+          ? const Center(
               child: Text('Database is empty'),
             )
           : ListView.builder(
