@@ -26,6 +26,11 @@ class DatabaseHelper {
   }
 
   Future<void> _createTables(Database db, int version) async {
+//     await db.execute('''
+//   ALTER TABLE message
+//   ADD COLUMN is_sent INTEGER
+// ''');
+
     await db.execute('''
       CREATE TABLE user(
         id INTEGER PRIMARY KEY,
@@ -34,19 +39,17 @@ class DatabaseHelper {
       )
     ''');
 
-
-await db.execute('''
-CREATE TABLE message (
+    await db.execute('''
+  CREATE TABLE message (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
   text TEXT,
-  date_time TEXT,
+  date_time INTEGER,
+  is_sent INTEGER,
   FOREIGN KEY (user_id) REFERENCES user (id)
 )
 ''');
-
   }
-
 
   // ...Các mã khác...
 

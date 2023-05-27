@@ -1,34 +1,50 @@
 import 'package:flutter/material.dart';
 
 import '../model/user/result.dart';
-
+import '../sqlite/data.dart';
 
 class DetailScreen extends StatelessWidget {
-  final int fromId;
-  final List<Result> results;
+  final int userId;
 
-  const DetailScreen({super.key, required this.fromId, required this.results});
+  const DetailScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
+    final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
+    Future<List<Map<String, dynamic>>> getMessagesByUserId(int userId) async {
+      final database = await _databaseHelper.database;
+      return await database.query('message',
+          where: 'user_id = ?', whereArgs: [userId], orderBy: 'date_time DESC');
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Screen'),
       ),
-      body: ListView.builder(
-        itemCount: results.length,
-        itemBuilder: (context, index) {
-          final result = results[index];
-          return ListTile(
-            title: Text('From ID: $fromId'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Text: ${result.message?.text}'),
-                Text('Date: ${result.message?.date}'),
-              ],
-            ),
-          );
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: getMessagesByUserId(
+            userId), // Thay userId bằng giá trị userId thực tế
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final messageList = snapshot.data!;
+            return ListView.builder(
+              itemCount: messageList.length,
+              itemBuilder: (context, index) {
+                final message = messageList[index];
+                return ListTile(
+                  title: Text(message['text'] ?? ''),
+                  subtitle: Text(
+                    DateTime.fromMillisecondsSinceEpoch(message['date_time'])
+                        .toString(),
+                  ),
+                );
+              },
+            );
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
         },
       ),
     );

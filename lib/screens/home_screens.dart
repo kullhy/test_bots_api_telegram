@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:test_bots_api_telegram/sqlite/data.dart';
@@ -17,7 +18,7 @@ class HomeScreens extends StatefulWidget {
 }
 
 class _HomeScreensState extends State<HomeScreens> {
-  DatabaseHelper _databaseHelper = DatabaseHelper.instance;
+  final DatabaseHelper _databaseHelper = DatabaseHelper.instance;
   Map<int, List<Result>> resultMap = {};
   bool isDatabaseEmpty = true;
 
@@ -38,7 +39,7 @@ class _HomeScreensState extends State<HomeScreens> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+    timer = Timer.periodic(const Duration(seconds: 20), (Timer timer) {
       fetchResults();
     });
   }
@@ -50,11 +51,10 @@ class _HomeScreensState extends State<HomeScreens> {
   Future<void> fetchResults() async {
     try {
       final results = await ApiService.fetchResults();
-      // print("$results done ok");
-      setState(() {
-        resultMap = _processResults(results);
-        // print("${results[2].message?.from} done ok");
-      });
+      saveReceiveToDatabase(results);
+      print(jsonEncode(results));
+      await checkDatabaseEmpty();
+      setState(() {});
     } catch (e) {
       // Xử lý lỗi khi không thể lấy được kết quả
       print(e);
@@ -63,30 +63,21 @@ class _HomeScreensState extends State<HomeScreens> {
 
   Future<void> checkDatabaseEmpty() async {
     final database = await _databaseHelper.database;
-    final results = await database.query('user');
+    final results = await database.query('message');
 
     setState(() {
       isDatabaseEmpty = results.isEmpty;
-      print("jjjj");
-      print(results);
     });
   }
 
-  Map<int, List<Result>> _processResults(List<Result> results) {
-    final processedMap = <int, List<Result>>{};
+  Future<List<Map<String, dynamic>>> getUsersFromDatabase() async {
+    final database = await _databaseHelper.database;
+    return await database.query('user');
+  }
 
-    for (var result in results) {
-      final fromId = result.message?.from?.id;
-
-      if (fromId != null) {
-        if (!processedMap.containsKey(fromId)) {
-          processedMap[fromId] = [];
-        }
-        processedMap[fromId]?.add(result);
-      }
-    }
-
-    return processedMap;
+  Future<List<Map<String, dynamic>>> getMessagesFromDatabase() async {
+    final database = await _databaseHelper.database;
+    return await database.query('message');
   }
 
   @override
@@ -99,28 +90,37 @@ class _HomeScreensState extends State<HomeScreens> {
           ? const Center(
               child: Text('Database is empty'),
             )
-          : ListView.builder(
-              itemCount: resultMap.length,
-              itemBuilder: (context, index) {
-                final fromId = resultMap.keys.elementAt(index);
-                final lastResult = resultMap[fromId]?.last;
-
-                return ListTile(
-                  title: Text('${lastResult?.message?.chat?.firstName}'),
-                  subtitle:
-                      Text('Last Message: ${lastResult?.message?.text ?? ''}'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailScreen(
-                          fromId: fromId,
-                          results: resultMap[fromId] ?? [],
-                        ),
-                      ),
-                    );
-                  },
-                );
+          : FutureBuilder<List<Map<String, dynamic>>>(
+              future: getUsersFromDatabase(),
+              builder: (context, snapshot) {
+                // print("aaaa${snapshot.data}");
+                // print("$getMessagesByUserId");
+                if (snapshot.hasData) {
+                  final userList = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: userList.length,
+                    itemBuilder: (context, index) {
+                      final user = userList[index];
+                      return ListTile(
+                        title: Text(user['first_name'] ?? 'xxx'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailScreen(
+                                userId: user['id'],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
               },
             ),
     );
