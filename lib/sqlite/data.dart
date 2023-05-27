@@ -5,6 +5,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 
+import '../model/user/message.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
   static Database? _database;
@@ -28,8 +30,7 @@ class DatabaseHelper {
       CREATE TABLE user(
         id INTEGER PRIMARY KEY,
         first_name TEXT,
-        last_name TEXT,
-
+        last_name TEXT
       )
     ''');
 
@@ -44,5 +45,31 @@ class DatabaseHelper {
     ''');
   }
 
-  // TODO: Thêm các phương thức để thực hiện thao tác với cơ sở dữ liệu (thêm, sửa, xóa, truy vấn)
+
+  // ...Các mã khác...
+
+  Future<int> getUserCount() async {
+    final database = await _initDatabase();
+    final count = Sqflite.firstIntValue(await database.rawQuery('SELECT COUNT(*) FROM user'));
+    return count ?? 0;
+  }
+
+  Future<int> getMessageCount() async {
+    final database = await _initDatabase();
+    final count = Sqflite.firstIntValue(await database.rawQuery('SELECT COUNT(*) FROM message'));
+    return count ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final database = await _initDatabase();
+    return database.query('user');
+  }
+
+  Future<List<Map<String, dynamic>>> getAllMessages() async {
+    final database = await _initDatabase();
+    return database.query('message');
+  }
 }
+
+  // TODO: Thêm các phương thức để thực hiện thao tác với cơ sở dữ liệu (thêm, sửa, xóa, truy vấn)
+
