@@ -2,18 +2,20 @@ import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 
+import '../model/send_mes/result.dart';
+import '../model/user/message.dart';
 import '../model/user/result.dart';
 import '../sqlite/data.dart';
 
 Future<void> saveReceiveToDatabase(List<Result> results) async {
   final database = await DatabaseHelper.instance.database;
-  print("test mes ${jsonEncode(results)}");
+  print("test mes ${results.length}");
   int x = 0;
 
-  for (var result in results) {
+  for (int i = 0; i < results.length; i++) {
     x = x + 1;
-    print("test mes ${x} ${jsonEncode(result)}");
-    final message = result.message;
+    print("test mes ${x} ${jsonEncode(results[i])}");
+    final message = results[i].message;
     if (message != null) {
       final messageRow = {
         'id': message.messageId,
@@ -24,68 +26,59 @@ Future<void> saveReceiveToDatabase(List<Result> results) async {
       };
 
       try {
-        final messageId = await database.insert('message', messageRow);
-        print('Message with ID $messageId saved successfully.');
+        // Chuyển phần thao tác cập nhật vào một luồng khác
+        await Future.delayed(Duration.zero, () async {
+          final messageId = await database.insert('message', messageRow);
+          print('Message with ID $messageId saved successfully.');
+        });
       } catch (e) {
         print('Failed to save message: $e');
       }
     }
 
-    final user = result.message?.from;
+    final user = results[i].message?.from;
     if (user != null) {
       final userRow = {
         'id': user.id,
         'first_name': user.firstName,
         'last_name': user.lastName ?? "",
-        // 'full_name': '${user.firstName} ${user.lastName}',
       };
 
-      final userId = await database.insert('user', userRow);
-      if (userId != null) {
-        print('User with ID $userId saved successfully.');
-      } else {
-        print('Failed to save user.');
+      try {
+        // Chuyển phần thao tác cập nhật vào một luồng khác
+        await Future.delayed(Duration.zero, () async {
+          final userId = await database.insert('user', userRow);
+          print('User with ID $userId saved successfully.');
+        });
+      } catch (e) {
+        print('Failed to save user: $e');
       }
     }
   }
 }
 
-Future<void> saveSendToDatabase(List<Result> results) async {
+Future<void> saveSendToDatabase(Result2 results2) async {
   final database = await DatabaseHelper.instance.database;
+  print("test mes send ${results2}");
+  print("huykull");
+  final message = results2;
+  if (message != null) {
+    final messageRow = {
+      'id': message.messageId,
+      'user_id': message.chat?.id,
+      'text': message.text,
+      'date_time': message.date,
+      'is_sent': 0,
+    };
 
-  for (var result in results) {
-    final user = result.message?.from;
-    if (user != null) {
-      final userRow = {
-        'id': user.id,
-        'first_name': user.firstName,
-        'last_name': user.lastName ?? "",
-        // 'full_name': '${user.firstName} ${user.lastName}',
-      };
-
-      final userId = await database.insert('user', userRow);
-      if (userId != null) {
-        print('User with ID $userId saved successfully.');
-      } else {
-        print('Failed to save user.');
-      }
-    }
-
-    final message = result.message;
-    if (message != null) {
-      final messageRow = {
-        'user_id': message.from?.id,
-        'text': message.text,
-        'date_time': message.date,
-        'is_sent': 0,
-      };
-
-      final messageId = await database.insert('message', messageRow);
-      if (messageId != null) {
+    try {
+      // Chuyển phần thao tác cập nhật vào một luồng khác
+      await Future.delayed(Duration.zero, () async {
+        final messageId = await database.insert('message', messageRow);
         print('Message with ID $messageId saved successfully.');
-      } else {
-        print('Failed to save message.');
-      }
+      });
+    } catch (e) {
+      print('Failed to save send message: $e');
     }
   }
 }

@@ -76,5 +76,4 @@ class DatabaseHelper {
   // }
 }
 
-  // TODO: Thêm các phương thức để thực hiện thao tác với cơ sở dữ liệu (thêm, sửa, xóa, truy vấn)
-
+// TODO: Thêm các phương thức để thực hiện thao tác với cơ sở dữ liệu (thêm, sửa, xóa, truy vấn)

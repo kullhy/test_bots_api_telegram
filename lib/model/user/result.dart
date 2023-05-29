@@ -14,7 +14,7 @@ class Result {
       );
 
   Map<String, dynamic> toJson() => {
-        'update_id': updateId,
+        'update_id': updateId ?? 0,
         'message': message?.toJson(),
       };
 }

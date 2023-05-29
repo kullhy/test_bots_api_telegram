@@ -32,14 +32,19 @@ class _HomeScreensState extends State<HomeScreens> {
     checkDatabaseEmpty();
   }
 
+  // ...
+
   @override
-  void dispose() {
-    super.dispose();
-    stopTimer();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchResults();
+    checkDatabaseEmpty();
   }
 
+  // ...
+
   void startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 20), (Timer timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       fetchResults();
     });
   }
@@ -51,7 +56,7 @@ class _HomeScreensState extends State<HomeScreens> {
   Future<void> fetchResults() async {
     try {
       final results = await ApiService.fetchResults();
-      saveReceiveToDatabase(results);
+      await saveReceiveToDatabase(results);
       print(jsonEncode(results));
       await checkDatabaseEmpty();
       setState(() {});
