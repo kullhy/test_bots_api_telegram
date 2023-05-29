@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:test_bots_api_telegram/screens/home_Screens.dart';
 
-void main() {
+import 'controller/background.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Permission.notification.isDenied.then(
+    (value) {
+      Permission.notification.request();
+    },
+  );
+  await initializeService();
   runApp(const MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:test_bots_api_telegram/sqlite/data.dart';
 
 import '../controller/getUpdates.dart';
@@ -87,47 +88,86 @@ class _HomeScreensState extends State<HomeScreens> {
 
   @override
   Widget build(BuildContext context) {
+    String text = "";
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Screen'),
-      ),
-      body: isDatabaseEmpty
-          ? const Center(
-              child: Text('Database is empty'),
-            )
-          : FutureBuilder<List<Map<String, dynamic>>>(
-              future: getUsersFromDatabase(),
-              builder: (context, snapshot) {
-                // print("aaaa${snapshot.data}");
-                // print("$getMessagesByUserId");
-                if (snapshot.hasData) {
-                  final userList = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: userList.length,
-                    itemBuilder: (context, index) {
-                      final user = userList[index];
-                      return ListTile(
-                        title: Text(user['first_name'] ?? 'xxx'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DetailScreen(
-                                userId: user['id'],
-                              ),
-                            ),
+        appBar: AppBar(
+          title: const Text('Main Screen'),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: isDatabaseEmpty
+                  ? const Center(
+                      child: Text('Database is empty'),
+                    )
+                  : FutureBuilder<List<Map<String, dynamic>>>(
+                      future: getUsersFromDatabase(),
+                      builder: (context, snapshot) {
+                        // print("aaaa${snapshot.data}");
+                        // print("$getMessagesByUserId");
+                        if (snapshot.hasData) {
+                          final userList = snapshot.data!;
+                          return ListView.builder(
+                            itemCount: userList.length,
+                            itemBuilder: (context, index) {
+                              final user = userList[index];
+                              return ListTile(
+                                title: Text(user['first_name'] ?? 'xxx'),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DetailScreen(
+                                        userId: user['id'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           );
-                        },
-                      );
-                    },
-                  );
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  return const Center(child: CircularProgressIndicator());
-                }
-              },
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                      },
+                    ),
             ),
-    );
+            Column(
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      FlutterBackgroundService().invoke('setAsForeground');
+                    },
+                    child: Text("setAsForeground")),
+                ElevatedButton(
+                    onPressed: () {
+                      print("backgr ok");
+                      FlutterBackgroundService().invoke('setAsBackground');
+                    },
+                    child: Text("setAsBackground")),
+                ElevatedButton(
+                    onPressed: () async {
+                      print("backgr ok");
+                      final service = FlutterBackgroundService();
+                      bool isRunning = await service.isRunning();
+                      if (isRunning) {
+                        service.invoke("stopService");
+                      } else {
+                        service.startService();
+                      }
+                      if (!isRunning) {
+                        text = "Stop";
+                      } else {
+                        text = "start";
+                      }
+                    },
+                    child: Text(text))
+              ],
+            ),
+          ],
+        ));
   }
 }

@@ -73,7 +73,7 @@ class _DetailScreenState extends State<DetailScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   messageList = snapshot.data!;
-                  WidgetsBinding.instance!.addPostFrameCallback((_) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollController.animateTo(
                       _scrollController.position.maxScrollExtent,
                       duration: const Duration(milliseconds: 300),
