@@ -3,11 +3,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:test_bots_api_telegram/main.dart';
 import 'package:test_bots_api_telegram/sqlite/data.dart';
 
 import '../controller/getUpdates.dart';
 // import '../controller/saveToDb.dart';
 import '../controller/saveToDb.dart';
+import '../controller/sendNoti.dart';
 import '../model/user/result.dart';
 import 'detail_screens.dart';
 
@@ -31,6 +34,28 @@ class _HomeScreensState extends State<HomeScreens> {
     fetchResults();
     startTimer();
     checkDatabaseEmpty();
+    mainContext = context;
+
+    FlutterLocalNotificationsPlugin()
+        .getNotificationAppLaunchDetails()
+        .then((notificationAppLaunchDetails) {
+      final payload =
+          notificationAppLaunchDetails?.notificationResponse?.payload;
+      print("check payload $payload");
+      if (payload != null) {
+        // Xử lý payload (userId) ở đây
+        final userId = payload;
+        // Điều hướng đến màn hình DetailScreen với userId tương ứng
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailScreen(
+              userId: int.parse(payload),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   // ...
@@ -146,6 +171,7 @@ class _HomeScreensState extends State<HomeScreens> {
                     onPressed: () {
                       print("backgr ok");
                       FlutterBackgroundService().invoke('setAsBackground');
+                      sendNotificationFromLastData();
                     },
                     child: Text("setAsBackground")),
                 ElevatedButton(

@@ -97,7 +97,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           Align(
                             alignment: alignment,
                             child: Container(
-                              margin: EdgeInsets.symmetric(
+                              margin: const EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 16),
                               padding: EdgeInsets.all(8),
                               decoration: BoxDecoration(

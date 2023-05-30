@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:test_bots_api_telegram/screens/home_Screens.dart';
 
 import 'controller/background.dart';
-
+BuildContext? mainContext;
 Future<void> main() async {
+  
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestPermission();
   WidgetsFlutterBinding.ensureInitialized();
   await Permission.notification.isDenied.then(
     (value) {

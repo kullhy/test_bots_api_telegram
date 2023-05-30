@@ -30,6 +30,7 @@ Future<void> saveReceiveToDatabase(List<Result> results) async {
         await Future.delayed(Duration.zero, () async {
           final messageId = await database.insert('message', messageRow);
           print('Message with ID $messageId saved successfully.');
+
         });
       } catch (e) {
         print('Failed to save message: $e');
@@ -56,6 +57,39 @@ Future<void> saveReceiveToDatabase(List<Result> results) async {
     }
   }
 }
+
+Future<void> saveAngNotiReceive(List<Result> results) async {
+  final database = await DatabaseHelper.instance.database;
+  print("test mes ${results.length}");
+  int x = 0;
+
+  for (int i = 0; i < results.length; i++) {
+    x = x + 1;
+    print("test mes ${x} ${jsonEncode(results[i])}");
+    final message = results[i].message;
+    if (message != null) {
+      final messageRow = {
+        'id': message.messageId,
+        'user_id': message.from?.id,
+        'text': message.text,
+        'date_time': message.date,
+        'is_sent': 1,
+      };
+
+      try {
+        // Chuyển phần thao tác cập nhật vào một luồng khác
+        await Future.delayed(Duration.zero, () async {
+          final messageId = await database.insert('message', messageRow);
+          print('Message with ID $messageId saved successfully.');
+          
+        });
+      } catch (e) {
+        print('Failed to save message: $e');
+      }
+    }
+  }
+}
+
 
 Future<void> saveSendToDatabase(Result2 results2) async {
   final database = await DatabaseHelper.instance.database;
